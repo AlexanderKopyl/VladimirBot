@@ -1,12 +1,10 @@
 <?php
 require_once "vendor/autoload.php";
-
+require_once "config/api.php";
 use Telegram\Bot\Api;
-$access_token = '999987622:AAEOU85tJaq04C-_qvnq973u_cTjMBtNH8E'; //Token
 
-$api = 'https://api.telegram.org/bot' . $access_token; //api bot
 
-$telegram = new Api('999987622:AAEOU85tJaq04C-_qvnq973u_cTjMBtNH8E'); //Устанавливаем токен, полученный у BotFather
+$telegram = new Api($access_token); //Устанавливаем токен, полученный у BotFather
 $result = $telegram -> getWebhookUpdates(); //Передаем в переменную $result полную информацию о сообщении пользователя
 
 $text = $result["message"]["text"]; //Текст сообщения
