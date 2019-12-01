@@ -12,8 +12,24 @@ $result = $telegram -> getWebhookUpdates(); //Передаем в перемен
 $text = $result["message"]["text"]; //Текст сообщения
 $chat_id = $result["message"]["chat"]["id"]; //Уникальный идентификатор пользователя
 $name = $result["message"]["from"]["username"]; //Юзернейм пользователя
+$first_name = $result["message"]["from"]["first_name"]; //Юзернейм пользователя
+$last_name = $result["message"]["from"]["last_name"]; //Юзернейм пользователя
 $date = $result["message"]['date']; //Юзернейм пользователя
 $keyboard = [["Для бизнеса"],["Наличные"],["Ипотека"]]; //Клавиатура
+
+$vk = array(
+    "text"=>"ВК",
+    "url"=>"https://vk.com/vladimirberlizov/"
+);
+$instagram = array(
+    "text"=>"Instagram",
+    "url"=>"https://www.instagram.com/vberlizov/"
+);
+$facebook = array(
+    "text"=>"Facebook",
+    "url"=>"https://www.facebook.com/berlizovv"
+);
+
 
 $first_step_question_1 = "Ты гражданин РФ?";
 $first_step_question_2 = "У тебя СЕЙЧАС есть непогашенные просрочки (по кредитам, картам, микрозаймам)?";
@@ -39,7 +55,7 @@ $business_question_4 = "Ты сдаёшь налоговые деклараци�
 
 $business_answer_1 = "Да я владелец ИП или ООО";
 $business_answer_1_1 = "Нет я  не владею ИП или ООО";
-$business_answer_2 = "Да моё ИП или ООО не зарегистрировано в России";
+$business_answer_2 = "Да моё ИП или ООО зарегистрировано в России";
 $business_answer_2_1 = "Нет моё ИП или ООО не зарегистрировано в России";
 $business_answer_3 = "Да мой бизнес действует более 12 месяцев";
 $business_answer_3_1 = "Нет мой бизнес не действует более 12 месяцев";
@@ -93,6 +109,8 @@ $business_consult = file_get_contents("buisness_consultation.txt");
 $business_online_sem = file_get_contents("buisness_online_seminars.txt");
 $business_tur_help = file_get_contents("buisness_turnkey_help.txt");
 
+
+
 $nal_question_1 = "У тебя есть работа?";
 $nal_question_2 = "Ты получаешь зарплату на карту Сбербанка или ВТБ?";
 $nal_question_3 = "Твой стаж на последнем месте больше 6 месяцев?";
@@ -139,14 +157,12 @@ if($text){
         $user_data = array(
             'name' => $name,
             'date_update' =>date('m-d-Y', $date),
+            'from' => $result["message"]["from"]
         );
         file_put_contents("$name.json", json_encode($user_data));
-        $reply = "$name пройдите не большой опрос";
+        $reply = "$first_name $last_name, привет! Ответь на несколько простых вопросов,чтобы узнать свои шансы на одобрение нужного вида кредита.";
         $telegram->sendMessage([ 'chat_id' => $chat_id, 'text' => $reply ]);
         sendQuestion($telegram,$chat_id,$first_step_question_1,[[$first_step_answer_1],[$first_step_answer_1_1]]);
-
-//        $reply_markup = $telegram->replyKeyboardMarkup([ 'keyboard' => $keyboard, 'resize_keyboard' => true, 'one_time_keyboard' => false ]);
-//        $telegram->sendMessage([ 'chat_id' => $chat_id, 'text' => $reply, 'reply_markup' => $reply_markup ]);
     }elseif ($text == "/help") {
         $reply = "Информация с помощью.";
         $telegram->sendMessage([ 'chat_id' => $chat_id, 'text' => $reply ]);
@@ -232,29 +248,32 @@ if($text){
     }elseif ($text == $business_answer_4_1){
         putAnswerToFile($name,'business_answer_4',true);
 
-        reply_html($telegram,$chat_id,$business_html);
-
-        sleep(1800);
-
-        $inline_button1 = array(
-            "text"=>"ВК",
-            "url"=>"https://vk.com/vladimirberlizov/"
+//        reply_html($telegram,$chat_id,$business_html);
+        sendQuestion(
+            $telegram,
+            $chat_id,
+            "Какая помощь в получении кредита тебе нужна?",
+            [
+                ["I) Инструкции. Чек-листы"],
+                ["II) Консультация. Профессиональный совет"],
+                ["III) Помощь под ключ"],
+                ["IV) Онлайн-семинары"]
+            ]
         );
+            $inline_keyboard = [[$vk,$facebook],[$instagram]];
 
-        $inline_button2 = array(
-            "text"=>"Instagram",
-            "url"=>"https://www.instagram.com/vberlizov/"
-        );
-        $inline_button3 = array(
-            "text"=>"Facebook",
-            "url"=>"https://www.facebook.com/berlizovv"
-        );
-        $inline_keyboard = [[$inline_button1,$inline_button3],[$inline_button2]];
-        $keyboard=array("inline_keyboard"=>$inline_keyboard);
-        $replyMarkup = json_encode($keyboard);
-        sendMessageReply_markup($chat_id, "Не забудь присоединиться к моим соцсетям, чтобы сохранить наше ценное знакомство: ",$replyMarkup);
-
+        sendSubcribe($inline_keyboard,$chat_id,"Не забудь присоединиться к моим соцсетям, чтобы сохранить наше ценное знакомство: ");
     }
+    elseif ($text == "I) Инструкции. Чек-листы"){
+          reply_html($telegram,$chat_id,$business_check);
+    }elseif ($text == "II) Консультация. Профессиональный совет"){
+        reply_html($telegram,$chat_id,$business_consult);
+    }elseif ($text == "III) Помощь под ключ"){
+        reply_html($telegram,$chat_id,$business_tur_help);
+    }elseif ($text == "IV) Онлайн-семинары"){
+        reply_html($telegram,$chat_id,$business_online_sem);
+    }
+
 
     elseif ($text == $nal_answer_1){
         putAnswerToFile($name,'nal_answer_1',true);
@@ -332,7 +351,6 @@ if($text){
         $inline_keyboard = [[$inline_button1]];
         $keyboard=array("inline_keyboard"=>$inline_keyboard);
         $replyMarkup = json_encode($keyboard);
-//        sendMessage($telegram,$chat_id,$first_step_no_answer);
         sendMessageReply_markup($chat_id, " t",$replyMarkup);
     }
 
@@ -363,5 +381,13 @@ function putAnswerToFile($name,$answer,$bool = false){
 function sendMessageReply_markup($chat_id, $message,$reply_markup) {
 
     file_get_contents($GLOBALS['api'] . '/sendMessage?chat_id=' . $chat_id . '&text=' . urlencode($message). '&reply_markup=' . $reply_markup);
+
+}
+function sendSubcribe($button,$chat_id,$message) {
+    sleep(2);
+    $inline_keyboard = $button;
+    $keyboard=array("inline_keyboard"=>$inline_keyboard);
+    $replyMarkup = json_encode($keyboard);
+    sendMessageReply_markup($chat_id, $message,$replyMarkup);
 
 }
